@@ -1,0 +1,28 @@
+{
+  "include": [
+    "webapp"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "webapp/experimental",
+    "webapp/typestubs"
+  ],
+  "typingsPath": "webapp/typestubs",
+  "reportMissingImports": false,
+  "reportMissingTypeStubs": false,
+  "pythonVersion": "3.12",
+  "pythonPlatform": "Windows",
+  "executionEnvironments": [
+    {
+      "root": "webapp/sdk",
+      "pythonVersion": "3.0",
+      "extraPaths": [
+        "webapp/backend"
+      ]
+    },
+    {
+      "root": "webapp"
+    }
+  ]
+}

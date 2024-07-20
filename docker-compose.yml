@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15.6-alpine3.19
+    volumes:
+      - blog_site_db_volume:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5433:5432"
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: deploy
+    volumes:
+      - .:/mysite
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_NAME=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DJANGO_SETTINGS_MODULE=config.settings.local
+    depends_on:
+      - db
+  test_web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    environment:
+      - DB_NAME=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=db
+      - DB_PORT=5432
+    depends_on:
+      - db
+volumes:
+  blog_site_db_volume:
