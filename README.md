@@ -1,7 +1,16 @@
 # 예약 시스템
 
 ## 소개
-이용자들이 
+기업 고객이 예약을 할 수 있는 웹 어플리케이션
+
+## 기능 요구사항
+
+[기능 요구사항 정리](./docs/analyzing-functional-requirements.md)
+
+## 테이블 설계 스케치
+
+1. 예약 가능 여부를 역정규화 시켜서 column으로 만들어 놓자.
+
 
 # 프로젝트 시작하기
 
@@ -113,5 +122,3 @@
 | EMAIL_HOST_USER     | dlwhdtjd098@gmail.com |
 | EMAIL_PORT          | 587                   |
 | EMAIL_USE_TLS       | True                  |
-
-# 프로젝트의 기능 소개
