@@ -4,9 +4,9 @@ services:
   db:
     image: postgres:15.6-alpine3.19
     volumes:
-      - blog_site_db_volume:/var/lib/postgresql/data
+      - reservation_system_db_volume:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=postgres
+      - POSTGRES_DB=reservation_system
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     ports:
@@ -21,7 +21,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DB_NAME=postgres
+      - DB_NAME=reservation_system
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_HOST=db
@@ -35,7 +35,7 @@ services:
       dockerfile: Dockerfile
       target: test
     environment:
-      - DB_NAME=postgres
+      - DB_NAME=reservation_system
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_HOST=db
@@ -43,4 +43,4 @@ services:
     depends_on:
       - db
 volumes:
-  blog_site_db_volume:
+  reservation_system_db_volume:
