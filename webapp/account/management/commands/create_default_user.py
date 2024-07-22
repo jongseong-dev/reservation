@@ -16,16 +16,13 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **kwargs):
-        env = os.environ.get("DJANGO_SETTINGS_MODULE")
-        is_local_env = "local" not in env
-        is_test_env = "test" not in env
+        env = os.environ.get("DJANGO_SETTINGS_MODULE", "")
+        is_local_env = "local" in env
+        is_test_env = "test" in env
         if not (is_local_env or is_test_env):
-            self.stdout.write(
-                self.style.ERROR(
-                    "This command can only be run in local environment"
-                )
-            )
-            return
+            error_message = "This command can only be run in local environment"
+            self.stdout.write(self.style.ERROR(error_message))
+            raise SystemExit
 
         if not User.objects.filter(username="admin").exists():
             User.objects.create_superuser(
