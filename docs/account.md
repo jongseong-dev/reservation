@@ -30,3 +30,12 @@ python manage.py create_default_user --settings=config.settings.local
     ```bash
     python manage.py createsuperuser --settings=config.settings.prod`   
     ```
+  
+## 로그인 기능
+
+- jwt를 통한 인증 시스템 구현
+
+### 선정 이유
+
+1. stateless한 인증 방식
+2. 클레임 안에 권한을 넣어서 사용하면 추후 api server가 scale out이 되어도 데이터 동기화 문제가 생기지 않을 것 같다.
