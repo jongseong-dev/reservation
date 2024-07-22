@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
+
 import os
 from pathlib import Path
 
@@ -35,6 +36,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_filters",
     # apps
+    "account.apps.AccountConfig",
 ]
 
 MIDDLEWARE = [
@@ -124,3 +126,6 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "dlwhdtjd098@gmail.com")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 EMAIL_PORT = os.environ.get("EMAIL_PORT", 587)
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", True)
+
+# Custom user model
+AUTH_USER_MODEL = "account.User"

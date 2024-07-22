@@ -11,6 +11,10 @@
 
 [테이블 설계 스케치](./docs/db.md)
 
+# 기능 소개
+
+- [사용자 app](./docs/account.md)
+
 # 프로젝트 시작하기
 
 ## 필요한 요소 세팅 및 Django App 실행하기
