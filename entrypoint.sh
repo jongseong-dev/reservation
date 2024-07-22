@@ -9,6 +9,7 @@ cd webapp
 # Django 애플리케이션을 실행합니다.
 if [ "$DJANGO_SETTINGS_MODULE" = "config.settings.local" ]; then
   python manage.py migrate
+  python manage.py create_default_user  # 관리자와 일반 사용자를 기본으로 추가함 local 환경에서만 추가
   python manage.py runserver 0.0.0.0:8000
 elif [ "$DJANGO_SETTINGS_MODULE" = "config.settings.test" ]; then
   pytest
