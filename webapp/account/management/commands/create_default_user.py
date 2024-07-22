@@ -1,7 +1,6 @@
 # yourapp/management/commands/create_default_users.py
 import os
 
-from django.contrib.auth.hashers import make_password
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 
@@ -17,21 +16,17 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **kwargs):
-        env = os.environ.get("DJANGO_SETTINGS_MODULE")
-        if "local" not in env:
-            self.stdout.write(
-                self.style.ERROR(
-                    "This command can only be run in local environment"
-                )
-            )
-            return
-
-        admin_password = make_password("adminpassword")
-        user_password = make_password("userpassword")
+        env = os.environ.get("DJANGO_SETTINGS_MODULE", "")
+        is_local_env = "local" in env
+        is_test_env = "test" in env
+        if not (is_local_env or is_test_env):
+            error_message = "This command can only be run in local environment"
+            self.stdout.write(self.style.ERROR(error_message))
+            raise SystemExit
 
         if not User.objects.filter(username="admin").exists():
             User.objects.create_superuser(
-                "admin", "admin@example.com", admin_password
+                "admin", "admin@example.com", "adminpassword"
             )
             self.stdout.write(
                 self.style.SUCCESS("Superuser created successfully")
@@ -48,7 +43,7 @@ class Command(BaseCommand):
             User.objects.create_user(
                 "user",
                 "user@example.com",
-                user_password,
+                "userpassword",
                 company=company,
             )
             self.stdout.write(

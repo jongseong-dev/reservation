@@ -1,6 +1,7 @@
 # 예약 시스템
 
 ## 소개
+
 기업 고객이 예약을 할 수 있는 웹 어플리케이션
 
 ## 기능 요구사항
@@ -105,6 +106,9 @@
 |------------------------|----------------|---------------------------------------------------------| 
 | DJANGO_SETTINGS_MODULE | 없음             |                                                         |
 | SECRET_KEY             | 94n7fx27pd-... | local 환경과 test 환경에서는 기본값을 사용하지만 <br/> prod에서는 주입해야 합니다. |
+| JWT_ACCESS_LIFETIME    | 60             | JWT ACCESS TOKEN의 유효 시간(분)                              |
+| JWT_REFRESH_LIFETIME   | 24             | JWT REFRESH TOKEN의 유효 시간(시)                             |
+| JWT_SECRET_KEY         | 없음             | JWT의 SECRET KEY                                         |
 
 ### DB
 
