@@ -8,6 +8,8 @@ omit =
     */settings/*
     */tests/*
     **/factory.py
+    */config/*
+    conftest.py
 
 [report]
 exclude_lines =
