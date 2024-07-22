@@ -17,7 +17,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         env = os.environ.get("DJANGO_SETTINGS_MODULE")
-        if "local" not in env:
+        is_local_env = "local" not in env
+        is_test_env = "test" not in env
+        if not (is_local_env or is_test_env):
             self.stdout.write(
                 self.style.ERROR(
                     "This command can only be run in local environment"
