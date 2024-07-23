@@ -50,6 +50,12 @@ urlpatterns = [
         "api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"
     ),
     path("api/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
+    # reservation
+    path(
+        "api/<str:version>/reservation/",
+        include("reservation.urls"),
+        name="reservation",
+    ),
 ]
 
 if settings.DEBUG:
