@@ -15,6 +15,8 @@
 # 기능 소개
 
 - [사용자 app](./docs/account.md)
+- [예약 app](./docs/reservation.md)
+  - 예약된 일자 조회 API 
 
 # 프로젝트 시작하기
 

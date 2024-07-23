@@ -24,6 +24,11 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView,
 )
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 
 from account.auth import CustomTokenObtainPairView
 
@@ -45,6 +50,11 @@ urlpatterns = [
         "api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"
     ),
     path("api/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
+    # reservation
+    path(
+        "api/<str:version>/reservation/",
+        include("reservation.urls", namespace="reservation"),
+    ),
 ]
 
 if settings.DEBUG:
@@ -52,3 +62,18 @@ if settings.DEBUG:
         urlpatterns += [
             path("__debug__/", include("debug_toolbar.urls")),
         ]
+    urlpatterns += [
+        # YOUR PATTERNS
+        path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+        # Optional UI:
+        path(
+            "api/schema/swagger-ui/",
+            SpectacularSwaggerView.as_view(url_name="schema"),
+            name="swagger-ui",
+        ),
+        path(
+            "api/schema/redoc/",
+            SpectacularRedocView.as_view(url_name="schema"),
+            name="redoc",
+        ),
+    ]
