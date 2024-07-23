@@ -53,8 +53,7 @@ urlpatterns = [
     # reservation
     path(
         "api/<str:version>/reservation/",
-        include("reservation.urls"),
-        name="reservation",
+        include("reservation.urls", namespace="reservation"),
     ),
 ]
 
