@@ -131,3 +131,13 @@
 | EMAIL_HOST_USER     | dlwhdtjd098@gmail.com |
 | EMAIL_PORT          | 587                   |
 | EMAIL_USE_TLS       | True                  |
+
+
+### REDIS
+
+| 변수명           | 기본값      |
+|---------------|----------|
+| REDIS_HOST    | localhost |
+| REDIS_PORT    | 6379     |
+| REDIS_DB    | 1        |
+| CACHE_TIMEOUT | 300      |
