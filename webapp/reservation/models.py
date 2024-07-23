@@ -3,6 +3,8 @@ from django.db import models
 from django.db.models import Sum
 from django.utils import timezone
 
+from reservation.const import MAXIMUM_RESERVED_COUNT
+
 
 class ReservedManager(models.Manager):
     def get_queryset(self):
@@ -31,7 +33,8 @@ class Reservation(models.Model):
         db_comment="예약한 사용자",
     )
     reserved_count = models.PositiveIntegerField(
-        validators=[MaxValueValidator(50000)], db_comment="예약 인원 수"
+        validators=[MaxValueValidator(MAXIMUM_RESERVED_COUNT)],
+        db_comment="예약 인원 수",
     )
     status = models.CharField(
         default=Status.PENDING,
