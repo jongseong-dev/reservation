@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django_filters",
     # apps
     "account.apps.AccountConfig",
+    "reservation.apps.ReservationConfig",
 ]
 
 MIDDLEWARE = [
@@ -104,6 +105,7 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 
 USE_TZ = True
+TIME_ZONE = "UTC"
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
