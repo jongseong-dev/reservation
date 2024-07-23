@@ -176,7 +176,7 @@ SIMPLE_JWT = {
 # API DOCS
 SPECTACULAR_SETTINGS = {
     "TITLE": "예약 시스템 API",
-    "DESCRIPTION": "고객은 해당 API를 통해 ",
+    "DESCRIPTION": "고객은 해당 API를 통해 시험일정을 예약할 수 있습니다.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     # OTHER SETTINGS
