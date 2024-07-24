@@ -10,11 +10,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-        token[
-            "is_admin"
-        ] = (
-            user.is_superuser
-        )  # Assuming you have a role field in your User model
+        token["is_admin"] = user.is_superuser
 
         return token
 
