@@ -11,34 +11,32 @@ from reservation.const import (
     MAXIMUM_RESERVED_COUNT,
     DAYS_PRIOR_TO_RESERVATION,
 )
-from reservation.models import Reservation
+from reservation.models import Reservation, ExamSchedule
 
 
 class ReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
-        fields = ["reserved_datetime", "reserved_count", "status"]
+        fields = ["reserved_count", "status"]
 
 
-class ReservationListSerializer(serializers.ModelSerializer):
-    is_available = serializers.SerializerMethodField(help_text="예약 가능 여부")
-    total_reserved_count = serializers.SerializerMethodField(
-        help_text="예약한 사람 수"
+class ExamScheduleListSerializer(serializers.ModelSerializer):
+    start_datetime = serializers.DateTimeField(
+        format="%Y-%m-%dT%H:00:00%z", help_text="시험 시작 일시"
     )
+    end_datetime = serializers.DateTimeField(
+        format="%Y-%m-%dT%H:00:00%z", help_text="시험 끝 일시"
+    )
+    remain_count = serializers.SerializerMethodField(help_text="남은 예약 가능 인원")
 
     class Meta:
-        model = Reservation
-        fields = ["total_reserved_count", "is_available"]
+        model = ExamSchedule
+        fields = ["id", "start_datetime", "end_datetime", "remain_count"]
 
-    def get_is_available(self, obj):
+    def get_remain_count(self, obj) -> int:
         if isinstance(obj, dict):
-            return obj["total_reserved_count"] < MAXIMUM_RESERVED_COUNT
-        return obj.total_reserved_count < MAXIMUM_RESERVED_COUNT
-
-    def get_total_reserved_count(self, obj):
-        if isinstance(obj, dict):
-            return obj["total_reserved_count"]
-        return obj.total_reserved_count
+            return obj["max_capacity"] - obj["confirmed_reserved_count"]
+        return obj.max_capacity - obj.confirmed_reserved_count
 
 
 class ReservationCreateSerializer(serializers.Serializer):
