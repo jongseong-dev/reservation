@@ -1,4 +1,7 @@
+from datetime import timedelta
+
 import factory
+from django.utils import timezone
 from factory.django import DjangoModelFactory
 
 from .const import MAXIMUM_RESERVED_COUNT
@@ -10,8 +13,12 @@ class ExamScheduleFactory(DjangoModelFactory):
     class Meta:
         model = ExamSchedule
 
-    start_datetime = factory.Faker("date_time_this_month")
-    end_datetime = factory.Faker("date_time_this_month", before_now=False)
+    start_datetime = factory.LazyFunction(
+        lambda: timezone.now() + timedelta(days=3, hours=1)
+    )
+    end_datetime = factory.LazyFunction(
+        lambda: timezone.now() + timedelta(days=3, hours=3)
+    )
     max_capacity = factory.Faker(
         "random_int", min=1, max=MAXIMUM_RESERVED_COUNT
     )
