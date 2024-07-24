@@ -1,19 +1,8 @@
 import datetime
 from django.utils import timezone
 
-from drf_spectacular.utils import OpenApiParameter, OpenApiExample
-from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiExample
 
-reservation_list_parameters = [
-    OpenApiParameter(
-        name="version",
-        type=OpenApiTypes.STR,
-        location=OpenApiParameter.PATH,
-        description="API version",
-        enum=["v1", "v2"],
-        default="v1",
-    ),
-]
 reservation_apply_example = [
     OpenApiExample(
         "유효한 예약 요청",

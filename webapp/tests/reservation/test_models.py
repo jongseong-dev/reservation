@@ -11,11 +11,13 @@ def test_exam_schedule_creation():
     start_time = timezone.now()
     end_time = start_time + timezone.timedelta(hours=2)
     exam_schedule = ExamSchedule.objects.create(
-        start_datetime=start_time, end_datetime=end_time, max_capacity=50000
+        start_datetime=start_time,
+        end_datetime=end_time,
+        max_capacity=MAXIMUM_RESERVED_COUNT,
     )
     assert exam_schedule.start_datetime == start_time
     assert exam_schedule.end_datetime == end_time
-    assert exam_schedule.max_capacity == 50000
+    assert exam_schedule.max_capacity == MAXIMUM_RESERVED_COUNT
 
 
 @pytest.mark.django_db
