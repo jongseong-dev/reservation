@@ -31,7 +31,8 @@ class ExamScheduleViewSet(viewsets.ReadOnlyModelViewSet):
 
     @extend_schema(
         summary="예약 가능한 일자를 조회하기 위한 API",
-        description="고객이 예약을 할 때 " "어느 일자가 예약이 되어있는지 확인하는 API",
+        description="고객이 예약을 할 때 "
+        "어느 일자가 예약이 되어있는지 확인하는 API",
         tags=["reservation", "exam-schedule"],
         responses={
             200: OpenApiResponse(response=ExamScheduleListSerializer),
@@ -78,7 +79,7 @@ class ReservationViewSet(GenericViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        results = serializer.save(user=request.user)
-        reservation_data = ReservationSerializer(results, many=True).data
+        result = serializer.save(user=request.user)
+        reservation_data = ReservationSerializer(result).data
 
         return Response(reservation_data, status=status.HTTP_201_CREATED)
