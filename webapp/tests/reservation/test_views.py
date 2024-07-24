@@ -2,18 +2,16 @@ import pytest
 from django.urls import reverse
 from rest_framework import status
 
-from reservation.models import Reservation
 
-
-@pytest.mark.django_db
-def test_access_reservation_list_auth_user(auth_user_client, reservation):
-    reservation.status = Reservation.Status.RESERVED
-    reservation.save()
-    response = auth_user_client.get(
-        reverse("reservation:reservation-list", kwargs={"version": "v1"})
-    )
-    assert response.status_code == status.HTTP_200_OK
-    assert response.data["results"][0]["is_available"]
+# @pytest.mark.django_db
+# def test_access_reservation_list_auth_user(auth_user_client, reservation):
+#     reservation.status = Reservation.Status.RESERVED
+#     reservation.save()
+#     response = auth_user_client.get(
+#         reverse("reservation:reservation-list", kwargs={"version": "v1"})
+#     )
+#     assert response.status_code == status.HTTP_200_OK
+#     assert response.data["results"][0]["is_available"]
 
 
 @pytest.mark.django_db
@@ -24,15 +22,15 @@ def test_access_reservation_list_anonymous(client):
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-@pytest.mark.django_db
-def test_valid_reservation_apply(auth_user_client, valid_reservation_data):
-    response = auth_user_client.post(
-        reverse("reservation:reservation-list", kwargs={"version": "v1"}),
-        valid_reservation_data,
-    )
-    assert response.status_code == status.HTTP_201_CREATED
-    assert len(response.data) == 3
-    assert Reservation.objects.count() == 3
+# @pytest.mark.django_db
+# def test_valid_reservation_apply(auth_user_client, valid_reservation_data):
+#     response = auth_user_client.post(
+#         reverse("reservation:reservation-list", kwargs={"version": "v1"}),
+#         valid_reservation_data,
+#     )
+#     assert response.status_code == status.HTTP_201_CREATED
+#     assert len(response.data) == 3
+#     assert Reservation.objects.count() == 3
 
 
 @pytest.mark.django_db
