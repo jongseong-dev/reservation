@@ -1,35 +1,71 @@
 from django.core.validators import MaxValueValidator
 from django.db import models
-from django.db.models import Sum
-from django.utils import timezone
+from django.db.models import CheckConstraint, Q
 
 from reservation.const import MAXIMUM_RESERVED_COUNT
 
 
-class ReservedManager(models.Manager):
-    def get_queryset(self):
-        now = timezone.now()
-        return (
-            super()
-            .get_queryset()
-            .filter(
-                reserved_datetime__gte=now, status=Reservation.Status.RESERVED
+class DefaultFieldModel(models.Model):
+    created_datetime = models.DateTimeField(
+        auto_now_add=True, db_comment="생성 일시"
+    )
+    updated_datetime = models.DateTimeField(auto_now=True, db_comment="수정 일시")
+
+    class Meta:
+        abstract = True
+
+
+class ExamSchedule(DefaultFieldModel):
+    start_datetime = models.DateTimeField(db_comment="시험 시작 일시")
+    end_datetime = models.DateTimeField(db_comment="시험 끝 일시")
+    max_capacity = models.PositiveIntegerField(
+        default=50000,
+        validators=[MaxValueValidator(MAXIMUM_RESERVED_COUNT)],
+        db_comment="최대 예약 인원",
+    )
+    confirmed_reserved_count = models.IntegerField(
+        default=0,
+        validators=[MaxValueValidator(MAXIMUM_RESERVED_COUNT)],
+        db_comment="확정된 예약 인원",
+    )
+
+    objects = models.Manager()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["start_datetime"]),
+            models.Index(fields=["end_datetime"]),
+        ]
+        constraints = [
+            CheckConstraint(
+                check=Q(confirmed_reserved_count__lte=50000),
+                name="confirmed_reserved_count_max_value_check",
             )
-            .values("reserved_datetime")
-            .annotate(total_reserved_count=Sum("reserved_count"))
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.start_datetime} - {self.end_datetime}: "
+            f"{self.confirmed_reservations}/{self.max_capacity}"
         )
 
 
-class Reservation(models.Model):
+class Reservation(DefaultFieldModel):
     class Status(models.TextChoices):
         PENDING = "PEND", "pending"
         RESERVED = "RSVD", "reserved"
+        CANCLED = "CNCL", "canceled"
 
-    reserved_datetime = models.DateTimeField(db_comment="예약 일시")
+    exam_schedule = models.ForeignKey(
+        ExamSchedule,
+        on_delete=models.CASCADE,
+        related_name="reservations",
+        db_comment="시험 일정",
+    )
     user = models.ForeignKey(
         "account.User",
         on_delete=models.CASCADE,
-        related_name="reservation",
+        related_name="reservations",
         db_comment="예약한 사용자",
     )
     reserved_count = models.PositiveIntegerField(
@@ -43,10 +79,14 @@ class Reservation(models.Model):
         db_comment="예약 상태",
     )
     objects = models.Manager()
-    reserved = ReservedManager()
 
     class Meta:
-        ordering = ["reserved_datetime"]
         indexes = [
-            models.Index(fields=["reserved_datetime", "status"]),
+            models.Index(fields=["status"]),
+        ]
+        constraints = [
+            CheckConstraint(
+                check=Q(reserved_count__lte=MAXIMUM_RESERVED_COUNT),
+                name="reserved_count_max_value_check",
+            )
         ]
