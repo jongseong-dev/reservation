@@ -17,7 +17,7 @@ from reservation.serializers import (
 
 
 class ReservationViewSet(viewsets.ModelViewSet):
-    queryset = Reservation.reserved.all()
+    queryset = Reservation.objects.all()
     # serializer_class = ReservationListSerializer
     permission_classes = [IsAuthenticated]
 

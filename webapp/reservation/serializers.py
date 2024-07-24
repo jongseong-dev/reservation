@@ -25,13 +25,10 @@ class ReservationListSerializer(serializers.ModelSerializer):
     total_reserved_count = serializers.SerializerMethodField(
         help_text="예약한 사람 수"
     )
-    reserved_datetime = serializers.DateTimeField(
-        format="%Y-%m-%dT%H:%M:%S%z", help_text="예약 일시"
-    )
 
     class Meta:
         model = Reservation
-        fields = ["reserved_datetime", "total_reserved_count", "is_available"]
+        fields = ["total_reserved_count", "is_available"]
 
     def get_is_available(self, obj):
         if isinstance(obj, dict):
