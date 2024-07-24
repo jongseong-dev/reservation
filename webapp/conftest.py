@@ -17,7 +17,9 @@ def plain_password():
 
 @pytest.fixture
 def admin(plain_password):
-    return UserFactory.create(password=plain_password, is_superuser=True)
+    return UserFactory.create(
+        password=plain_password, is_superuser=True, is_staff=True
+    )
 
 
 @pytest.fixture
@@ -28,6 +30,14 @@ def user(plain_password):
 @pytest.fixture
 def auth_user_client(client, user):
     refresh = RefreshToken.for_user(user)
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+
+    return client
+
+
+@pytest.fixture
+def auth_admin_client(client, admin):
+    refresh = RefreshToken.for_user(admin)
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
 
     return client

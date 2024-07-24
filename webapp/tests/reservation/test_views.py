@@ -4,7 +4,9 @@ from rest_framework import status
 
 from reservation.const import (
     MAXIMUM_RESERVED_COUNT,
+    ReservationErrorResponseMessage,
 )
+from reservation.models import Reservation
 
 
 @pytest.fixture
@@ -82,3 +84,85 @@ def test_apply_reservation_anonymous(
         {"exam_schedule_id": exam_schedule.id, "reserved_count": 30},
     )
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.django_db
+def test_admin_canceled_reservation_api_cancels_correctly(
+    auth_admin_client, reservation, exam_schedule
+):
+    canceled_url = reverse(
+        "admin_reservation:reservation-canceled",
+        kwargs={"version": "v1", "pk": reservation.id},
+    )
+    response = auth_admin_client.put(canceled_url)
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data["status"] == Reservation.Status.CANCLED
+
+
+@pytest.mark.django_db
+def test_not_auth_canceled_reservation_api(
+    auth_user_client, reservation, exam_schedule
+):
+    canceled_url = reverse(
+        "admin_reservation:reservation-canceled",
+        kwargs={"version": "v1", "pk": reservation.id},
+    )
+    response = auth_user_client.put(canceled_url)
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+def test_admin_reserved_reservation_api_valid(
+    auth_admin_client, reservation, exam_schedule
+):
+    reserved_url = reverse(
+        "admin_reservation:reservation-confirmed",
+        kwargs={"version": "v1", "pk": reservation.id},
+    )
+    response = auth_admin_client.put(reserved_url)
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data["status"] == Reservation.Status.RESERVED
+
+
+@pytest.mark.django_db
+def test_not_auth_reserved_reservation_api_invalid(
+    auth_user_client, reservation, exam_schedule
+):
+    reserved_url = reverse(
+        "admin_reservation:reservation-confirmed",
+        kwargs={"version": "v1", "pk": reservation.id},
+    )
+    response = auth_user_client.put(reserved_url)
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+def test_not_change_when_same_status_reservation_api_invalid(
+    auth_admin_client, reservation, exam_schedule
+):
+    reservation.status = Reservation.Status.CANCLED
+    reservation.save()
+    reserved_url = reverse(
+        "admin_reservation:reservation-canceled",
+        kwargs={"version": "v1", "pk": reservation.id},
+    )
+    response = auth_admin_client.put(reserved_url)
+    expected_message = ReservationErrorResponseMessage.SAME_STATUS_CHECK
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert str(response.data["message"][0]) == expected_message
+
+
+@pytest.mark.django_db
+def test_exceed_reserved_count_reserved_reservation_api_invalid(
+    auth_admin_client, reservation, exam_schedule
+):
+    reservation.reserved_count = MAXIMUM_RESERVED_COUNT
+    reservation.save()
+    reserved_url = reverse(
+        "admin_reservation:reservation-confirmed",
+        kwargs={"version": "v1", "pk": reservation.id},
+    )
+    response = auth_admin_client.put(reserved_url)
+    expected_message = ReservationErrorResponseMessage.EXCEED_REMAIN_COUNT
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert str(response.data["message"][0]) == expected_message

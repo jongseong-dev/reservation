@@ -4,7 +4,7 @@ from django.urls import reverse
 
 @pytest.fixture
 def access_token_url():
-    return reverse("custom_token_obtain_pair")
+    return reverse("token_obtain_pair")
 
 
 @pytest.fixture
