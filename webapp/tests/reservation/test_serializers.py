@@ -24,7 +24,7 @@ def test_reservation_create_serializer_validates_correctly(
     exam_schedule, reservation
 ):
     serializer = ReservationCreateSerializer(
-        data={"exam_schedule_id": exam_schedule.id, "reserved_count": 30}
+        data={"exam_schedule_id": exam_schedule.id, "reserved_count": 1}
     )
     assert serializer.is_valid()
 
