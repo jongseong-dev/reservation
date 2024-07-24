@@ -1,10 +1,10 @@
 # yourapp/management/commands/create_default_users.py
-import os
 
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 
 from account.models import Company
+from utils import is_deployment_env, stdout_error_message
 
 User = get_user_model()
 
@@ -16,13 +16,8 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **kwargs):
-        env = os.environ.get("DJANGO_SETTINGS_MODULE", "")
-        is_local_env = "local" in env
-        is_test_env = "test" in env
-        if not (is_local_env or is_test_env):
-            error_message = "This command can only be run in local environment"
-            self.stdout.write(self.style.ERROR(error_message))
-            raise SystemExit
+        if is_deployment_env():
+            stdout_error_message(self)
 
         if not User.objects.filter(username="admin").exists():
             User.objects.create_superuser(
