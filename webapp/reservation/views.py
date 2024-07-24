@@ -1,19 +1,25 @@
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework import status, viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from reservation.api_schemas import (
     reservation_apply_example,
 )
-from reservation.const import DAYS_PRIOR_TO_RESERVATION
+from reservation.const import (
+    DAYS_PRIOR_TO_RESERVATION,
+)
 from reservation.models import ExamSchedule, Reservation
 from reservation.serializers import (
     ExamScheduleListSerializer,
     ReservationCreateSerializer,
     ReservationSerializer,
+    AdminReservationSerializer,
+    AdminReservationUpdateStatusSerializer,
 )
 
 
@@ -33,7 +39,7 @@ class ExamScheduleViewSet(viewsets.ReadOnlyModelViewSet):
         summary="예약 가능한 일자를 조회하기 위한 API",
         description="고객이 예약을 할 때 "
         "어느 일자가 예약이 되어있는지 확인하는 API",
-        tags=["reservation", "exam-schedule"],
+        tags=["Reservation", "Exam Schedule"],
         responses={
             200: OpenApiResponse(response=ExamScheduleListSerializer),
         },
@@ -44,7 +50,7 @@ class ExamScheduleViewSet(viewsets.ReadOnlyModelViewSet):
     @extend_schema(
         summary="예약 가능한 일자 상세보기 API",
         description="해당 일자의 예약 가능한 시간을 상세 조회하는 API",
-        tags=["reservation", "exam-schedule"],
+        tags=["Reservation", "Exam Schedule"],
         responses={
             200: OpenApiResponse(response=ExamScheduleListSerializer),
         },
@@ -69,7 +75,7 @@ class ReservationViewSet(GenericViewSet):
         description="""
                 고객이 해당 일자에 예약 신청하는 API
                 """,
-        tags=["reservation"],
+        tags=["Reservation"],
         request=ReservationCreateSerializer,
         examples=reservation_apply_example,
         responses={
@@ -83,3 +89,88 @@ class ReservationViewSet(GenericViewSet):
         reservation_data = ReservationSerializer(result).data
 
         return Response(reservation_data, status=status.HTTP_201_CREATED)
+
+
+class AdminReservationViewSet(viewsets.ModelViewSet):
+    serializer_class = AdminReservationSerializer
+    queryset = Reservation.objects.select_related("exam_schedule").all()
+    permission_classes = [IsAdminUser]
+
+    class Meta:
+        model = Reservation
+        fields = [
+            "id",
+            "user",
+            "exam_schedule",
+            "reserved_count",
+            "created_at",
+        ]
+
+    def perform_update_status(
+        self, data, reserved_status: Reservation.Status.choices
+    ):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(status=reserved_status)
+        return serializer
+
+    @extend_schema(
+        summary="예약 확정 API",
+        description="신청한 예약을 확정하는 API",
+        tags=["Admin Reservation"],
+        request=AdminReservationUpdateStatusSerializer,
+        responses={
+            201: OpenApiResponse(response=AdminReservationSerializer),
+        },
+    )
+    @action(
+        detail=True,
+        methods=["PUT"],
+        url_path="reserved",
+        url_name="confirmed",
+        serializer_class=AdminReservationUpdateStatusSerializer,
+    )
+    def confirmed_reservation(self, request, version=None, pk=None):
+        """
+        예약을 확정하는 API
+        """
+        try:
+            serializer = self.perform_update_status(
+                request.data, Reservation.Status.RESERVED
+            )
+            return Response(serializer.data)
+        except ValidationError as ve:
+            return Response(
+                {"message": ve.detail}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @extend_schema(
+        summary="예약 삭제 API",
+        description="신청한 예약을 삭제(취소)하는 API",
+        tags=["Admin Reservation"],
+        request=AdminReservationUpdateStatusSerializer,
+        responses={
+            201: OpenApiResponse(response=AdminReservationSerializer),
+        },
+    )
+    @action(
+        detail=True,
+        methods=["PUT"],
+        url_path="canceled",
+        url_name="canceled",
+        serializer_class=AdminReservationUpdateStatusSerializer,
+    )
+    def canceled_reservation(self, request, version=None, pk=None):
+        """
+        예약을 삭제하는 API
+        """
+        try:
+            serializer = self.perform_update_status(
+                request.data, Reservation.Status.CANCLED
+            )
+            return Response(serializer.data)
+        except ValidationError as ve:
+            return Response(
+                {"message": ve.detail}, status=status.HTTP_400_BAD_REQUEST
+            )
