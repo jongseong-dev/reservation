@@ -14,7 +14,6 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 
@@ -23,14 +22,13 @@ from django.http import JsonResponse
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView,
+    TokenObtainPairView,
 )
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
-
-from account.auth import CustomTokenObtainPairView
 
 
 def health_check(request):
@@ -39,18 +37,21 @@ def health_check(request):
 
 urlpatterns = [
     path("api-auth/", include("rest_framework.urls")),
-    path("admin/", admin.site.urls),
     path("health/", health_check, name="health_check"),
     path(
         "api/token/",
-        CustomTokenObtainPairView.as_view(),
-        name="custom_token_obtain_pair",
+        TokenObtainPairView.as_view(),
+        name="token_obtain_pair",
     ),
     path(
         "api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"
     ),
     path("api/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     # reservation
+    path(
+        "admin/api/<str:version>/reservation/",
+        include("reservation.admin_urls", namespace="admin_reservation"),
+    ),
     path(
         "api/<str:version>/reservation/",
         include("reservation.urls", namespace="reservation"),
