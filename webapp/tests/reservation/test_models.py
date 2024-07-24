@@ -1,80 +1,48 @@
 import pytest
+from django.db import IntegrityError
 from django.utils import timezone
 
-from reservation.factories import ReservationFactory
-from reservation.models import Reservation
+from reservation.const import MAXIMUM_RESERVED_COUNT
+from reservation.models import ExamSchedule, Reservation
 
 
 @pytest.mark.django_db
-def test_reservation_status_after_change(reservation):
+def test_exam_schedule_creation():
+    start_time = timezone.now()
+    end_time = start_time + timezone.timedelta(hours=2)
+    exam_schedule = ExamSchedule.objects.create(
+        start_datetime=start_time, end_datetime=end_time, max_capacity=50000
+    )
+    assert exam_schedule.start_datetime == start_time
+    assert exam_schedule.end_datetime == end_time
+    assert exam_schedule.max_capacity == 50000
+
+
+@pytest.mark.django_db
+def test_reservation_status_change(reservation):
+    assert reservation.status == Reservation.Status.PENDING
     reservation.status = Reservation.Status.RESERVED
     reservation.save()
-    assert reservation.status == Reservation.Status.RESERVED
+    result = Reservation.objects.get(id=reservation.id).status
+    assert result == Reservation.Status.RESERVED
 
 
 @pytest.mark.django_db
-def test_reserved_list_with_future_reservation(user):
-    future_reservation = ReservationFactory(
-        user=user,
-        status=Reservation.Status.RESERVED,
-        reserved_datetime=timezone.now() + timezone.timedelta(days=1),
-    )
-    result = Reservation.reserved.values_list(
-        "total_reserved_count", flat=True
-    )
-    assert result[0] == future_reservation.reserved_count
+def test_reservation_exceeds_capacity(user, exam_schedule, reservation):
+    with pytest.raises(IntegrityError):
+        Reservation.objects.filter(
+            user=user, exam_schedule=exam_schedule
+        ).update(reserved_count=(MAXIMUM_RESERVED_COUNT + 1))
+        Reservation.objects.create(
+            exam_schedule=exam_schedule,
+            user=user,
+            reserved_count=(MAXIMUM_RESERVED_COUNT + 1),
+        )
 
 
 @pytest.mark.django_db
-def test_reserved_list_without_future_reservation(user):
-    past_reservation = ReservationFactory.create(
-        user=user,
-        status=Reservation.Status.RESERVED,
-        reserved_datetime=timezone.now() - timezone.timedelta(days=1),
-    )
-    ReservationFactory.create_batch(
-        10,
-        user=user,
-        status=Reservation.Status.RESERVED,
-    )
-    assert past_reservation not in Reservation.reserved.all()
-
-
-@pytest.mark.django_db
-def test_reserved_list_with_pending_status(user):
-    pending_reservation = ReservationFactory(
-        user=user, status=Reservation.Status.PENDING
-    )
-    assert pending_reservation not in Reservation.reserved.all()
-
-
-@pytest.mark.django_db
-def test_reserved_list_with_reserved_status(user):
-    reserved_reservation = ReservationFactory(
-        user=user, status=Reservation.Status.RESERVED
-    )
-    assert reserved_reservation not in Reservation.reserved.all()
-
-
-@pytest.mark.django_db
-def test_reserved_list_check_aggregate(user):
-    ReservationFactory.create_batch(
-        10,
-        user=user,
-        status=Reservation.Status.RESERVED,
-        reserved_count=30,
-        reserved_datetime=timezone.now() + timezone.timedelta(days=1),
-    )
-    ReservationFactory.create_batch(
-        10,
-        user=user,
-        status=Reservation.Status.RESERVED,
-        reserved_count=15,
-        reserved_datetime=timezone.now() + timezone.timedelta(hours=1),
-    )
-    result = Reservation.reserved.values_list(
-        "total_reserved_count", flat=True
-    )
-    assert len(result) == 2
-    assert result[0] == 150
-    assert result[1] == 300
+def test_reservation_cancellation(reservation):
+    reservation.status = Reservation.Status.CANCLED
+    reservation.save()
+    result = Reservation.objects.get(id=reservation.id).status
+    assert result == Reservation.Status.CANCLED

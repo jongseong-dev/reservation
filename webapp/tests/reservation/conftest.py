@@ -3,12 +3,17 @@ from datetime import timedelta
 import pytest
 from django.utils import timezone
 
-from reservation.factories import ReservationFactory
+from reservation.factories import ReservationFactory, ExamScheduleFactory
 
 
 @pytest.fixture
-def reservation(user):
-    return ReservationFactory.create(user=user)
+def exam_schedule():
+    return ExamScheduleFactory.create()
+
+
+@pytest.fixture
+def reservation(user, exam_schedule):
+    return ReservationFactory.create(user=user, exam_schedule=exam_schedule)
 
 
 @pytest.fixture
