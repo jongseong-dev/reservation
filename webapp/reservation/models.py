@@ -19,7 +19,7 @@ class ExamSchedule(DefaultFieldModel):
     start_datetime = models.DateTimeField(db_comment="시험 시작 일시")
     end_datetime = models.DateTimeField(db_comment="시험 끝 일시")
     max_capacity = models.PositiveIntegerField(
-        default=50000,
+        default=MAXIMUM_RESERVED_COUNT,
         validators=[MaxValueValidator(MAXIMUM_RESERVED_COUNT)],
         db_comment="최대 예약 인원",
     )
@@ -36,9 +36,10 @@ class ExamSchedule(DefaultFieldModel):
             models.Index(fields=["start_datetime"]),
             models.Index(fields=["end_datetime"]),
         ]
+        unique_together = [["start_datetime", "end_datetime"]]
         constraints = [
             CheckConstraint(
-                check=Q(confirmed_reserved_count__lte=50000),
+                check=Q(confirmed_reserved_count__lte=MAXIMUM_RESERVED_COUNT),
                 name="confirmed_reserved_count_max_value_check",
             )
         ]
