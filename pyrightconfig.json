@@ -10,6 +10,7 @@
   ],
   "typingsPath": "webapp/typestubs",
   "reportMissingImports": false,
+  "reportMissingModuleSource": false,
   "reportMissingTypeStubs": false,
   "pythonVersion": "3.12",
   "pythonPlatform": "Windows",
