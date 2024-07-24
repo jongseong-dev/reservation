@@ -1,6 +1,4 @@
-from typing import Optional
-
-from django.core import cache
+from django.core.cache import cache
 
 
 class Remainder:
