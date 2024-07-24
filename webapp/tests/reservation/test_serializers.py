@@ -20,11 +20,12 @@ def test_exam_schedule_list_serializer_correct_remain_count(
 
 
 @pytest.mark.django_db
-def test_reservation_create_serializer_validates_correctly(
-    exam_schedule, reservation
-):
+def test_reservation_create_serializer_validates_correctly(exam_schedule):
     serializer = ReservationCreateSerializer(
-        data={"exam_schedule_id": exam_schedule.id, "reserved_count": 1}
+        data={
+            "exam_schedule_id": exam_schedule.id,
+            "reserved_count": 10,
+        }
     )
     assert serializer.is_valid()
 

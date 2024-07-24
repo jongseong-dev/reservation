@@ -20,11 +20,9 @@ class ExamScheduleFactory(DjangoModelFactory):
         lambda: timezone.now() + timedelta(days=3, hours=3)
     )
     max_capacity = factory.Faker(
-        "random_int", min=1, max=MAXIMUM_RESERVED_COUNT
+        "random_int", min=10000, max=MAXIMUM_RESERVED_COUNT
     )
-    confirmed_reserved_count = factory.Faker(
-        "random_int", min=0, max=MAXIMUM_RESERVED_COUNT
-    )
+    confirmed_reserved_count = factory.Faker("random_int", min=0, max=10000)
 
 
 class ReservationFactory(DjangoModelFactory):
