@@ -14,6 +14,7 @@ from reservation.serializers import (
     ExamScheduleListSerializer,
     ReservationCreateUpdateSerializer,
     AdminReservationUpdateStatusSerializer,
+    ReservationDeleteSerializer,
 )
 
 
@@ -231,3 +232,24 @@ def test_create_reservation(user, exam_schedule):
     reservation = serializer.save(user=user)
     assert reservation.exam_schedule == exam_schedule
     assert reservation.reserved_count == 5
+
+
+@pytest.mark.django_db
+def test_update_reservation_status_when_status_is_reserved(reservation):
+    reservation.status = Reservation.Status.RESERVED
+    serializer = ReservationDeleteSerializer(instance=reservation)
+
+    with pytest.raises(ValidationError):
+        serializer.update(reservation, {"status": Reservation.Status.CANCLED})
+
+
+@pytest.mark.django_db
+def test_update_reservation_status_when_status_is_not_reserved(reservation):
+    reservation.status = Reservation.Status.PENDING
+    serializer = ReservationDeleteSerializer(
+        instance=reservation, data={"status": Reservation.Status.CANCLED}
+    )
+    update_serializer = serializer.update(
+        reservation, {"status": Reservation.Status.CANCLED}
+    )
+    assert update_serializer.status == Reservation.Status.CANCLED
