@@ -59,7 +59,7 @@
 
 - 테스트를 진행 할 수 있습니다.
   ```bash
-  docker-compose up --build test
+  docker-compose up --build test_web
   ```
 
 ## 환경변수
