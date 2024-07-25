@@ -2,12 +2,13 @@ from django.utils import timezone
 
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiResponse
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, mixins
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
 
 from reservation.api_schemas import (
     reservation_apply_query_parameters,
@@ -69,7 +70,18 @@ class ExamScheduleViewSet(viewsets.ReadOnlyModelViewSet):
         return super().retrieve(request, *args, **kwargs)
 
 
-class ReservationViewSet(viewsets.ModelViewSet):
+@extend_schema(
+    summary="고객 API",
+    description="고객 API",
+    tags=["Reservation"],
+)
+class ReservationViewSet(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet,
+):
     queryset = Reservation.objects.select_related("exam_schedule").all()
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
@@ -185,8 +197,22 @@ class ReservationViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
+    def destory(self, request, *args, **kwargs):
+        pass
 
-class AdminReservationViewSet(viewsets.ModelViewSet):
+
+@extend_schema(
+    summary="관리자 API",
+    description="관리자 API",
+    tags=["Admin Reservation"],
+)
+class AdminReservationViewSet(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet,
+):
     serializer_class = AdminReservationSerializer
     queryset = Reservation.objects.select_related("exam_schedule").all()
     permission_classes = [IsAdminUser]
@@ -270,7 +296,7 @@ class AdminReservationViewSet(viewsets.ModelViewSet):
     )
     @action(
         detail=True,
-        methods=["PUT", "DELETE"],
+        methods=["DELETE"],
         url_path="canceled",
         url_name="canceled",
         serializer_class=AdminReservationUpdateStatusSerializer,
