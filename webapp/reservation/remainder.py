@@ -52,7 +52,7 @@ class Remainder:
         self.storage.set(key, total - reserved)
         return total - reserved
 
-    def get_remain_reserved_datetime(self, id_: int) -> int | None:
+    def get_remain_reserved_days(self, id_: int) -> int | None:
         """
         현재 시점에서 예약 가능한 일자인지 조회
         """
