@@ -2,19 +2,23 @@ from django.utils import timezone
 
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiResponse
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, mixins
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
 
 from reservation.api_schemas import (
+    reservation_apply_query_parameters,
+    admin_reservation_list_examples,
     reservation_apply_example,
 )
 from reservation.const import (
     DAYS_PRIOR_TO_RESERVATION,
 )
+from reservation.filtersets import ExamScheduleFilter, AdminReservationFilter
 from reservation.models import ExamSchedule, Reservation
 from reservation.serializers import (
     ExamScheduleListSerializer,
@@ -30,6 +34,9 @@ class ExamScheduleViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ExamSchedule.objects.all()
     serializer_class = ExamScheduleListSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_class = ExamScheduleFilter
+    ordering_fields = ["start_datetime"]
 
     def get_queryset(self):
         now = timezone.now()
@@ -42,7 +49,8 @@ class ExamScheduleViewSet(viewsets.ReadOnlyModelViewSet):
         summary="예약 가능한 일자를 조회하기 위한 API",
         description="고객이 예약을 할 때 "
         "어느 일자가 예약이 되어있는지 확인하는 API",
-        tags=["Reservation", "Exam Schedule"],
+        parameters=reservation_apply_query_parameters,
+        tags=["Exam Schedule"],
         responses={
             200: OpenApiResponse(response=ExamScheduleListSerializer),
         },
@@ -53,7 +61,7 @@ class ExamScheduleViewSet(viewsets.ReadOnlyModelViewSet):
     @extend_schema(
         summary="예약 가능한 일자 상세보기 API",
         description="해당 일자의 예약 가능한 시간을 상세 조회하는 API",
-        tags=["Reservation", "Exam Schedule"],
+        tags=["Exam Schedule"],
         responses={
             200: OpenApiResponse(response=ExamScheduleListSerializer),
         },
@@ -62,7 +70,18 @@ class ExamScheduleViewSet(viewsets.ReadOnlyModelViewSet):
         return super().retrieve(request, *args, **kwargs)
 
 
-class ReservationViewSet(viewsets.ModelViewSet):
+@extend_schema(
+    summary="고객 API",
+    description="고객 API",
+    tags=["Reservation"],
+)
+class ReservationViewSet(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet,
+):
     queryset = Reservation.objects.select_related("exam_schedule").all()
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
@@ -97,15 +116,13 @@ class ReservationViewSet(viewsets.ModelViewSet):
         summary="고객이 본인 예약을 삭제하는 API",
         description="고객이 해당 일자에 예약을 삭제하는 API",
         tags=["Reservation"],
-        request=ReservationCreateUpdateSerializer,
-        examples=reservation_apply_example,
         responses={
             204: OpenApiResponse(response=None),
         },
     )
     @action(
         detail=True,
-        methods=["DELETE", "PUT"],
+        methods=["DELETE"],
         url_path="canceled",
         url_name="canceled",
     )
@@ -156,12 +173,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
         },
     )
     def update(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        result = serializer.save(user=request.user)
-        reservation_data = ReservationSerializer(result).data
-
-        return Response(reservation_data, status=status.HTTP_201_CREATED)
+        return super().update(request, *args, **kwargs)
 
     @extend_schema(
         summary="본인 예약 확인 API",
@@ -185,11 +197,28 @@ class ReservationViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
+    def destory(self, request, *args, **kwargs):
+        pass
 
-class AdminReservationViewSet(viewsets.ModelViewSet):
+
+@extend_schema(
+    summary="관리자 API",
+    description="관리자 API",
+    tags=["Admin Reservation"],
+)
+class AdminReservationViewSet(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet,
+):
     serializer_class = AdminReservationSerializer
     queryset = Reservation.objects.select_related("exam_schedule").all()
     permission_classes = [IsAdminUser]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_class = AdminReservationFilter
+    ordering_fields = ["reserved_count"]
 
     class Meta:
         model = Reservation
@@ -211,12 +240,28 @@ class AdminReservationViewSet(viewsets.ModelViewSet):
         return serializer
 
     @extend_schema(
+        summary="전체 고객 예약 조회 API",
+        description="관리자가 예약을 조회하는 API",
+        tags=["Admin Reservation"],
+        parameters=admin_reservation_list_examples,
+        responses={
+            200: AdminReservationSerializer,
+        },
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
         summary="예약 확정 API",
         description="신청한 예약을 확정하는 API",
         tags=["Admin Reservation"],
         request=AdminReservationUpdateStatusSerializer,
         responses={
-            204: OpenApiResponse(response=None),
+            204: OpenApiResponse(description="예약 확정이 성공적으로 되었다."),
+            400: OpenApiResponse(
+                description="만약 인원이 넘거나, 확정된 상태에서 "
+                "또 확정시키면 오류가 나게된다."
+            ),
         },
     )
     @action(
@@ -251,7 +296,7 @@ class AdminReservationViewSet(viewsets.ModelViewSet):
     )
     @action(
         detail=True,
-        methods=["PUT", "DELETE"],
+        methods=["DELETE"],
         url_path="canceled",
         url_name="canceled",
         serializer_class=AdminReservationUpdateStatusSerializer,

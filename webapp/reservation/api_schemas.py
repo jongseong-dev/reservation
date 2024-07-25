@@ -1,4 +1,4 @@
-from drf_spectacular.utils import OpenApiExample
+from drf_spectacular.utils import OpenApiExample, OpenApiParameter
 
 reservation_apply_example = [
     OpenApiExample(
@@ -21,5 +21,60 @@ reservation_apply_example = [
             "reserved_count": 51000,
         },
         request_only=True,
+    ),
+]
+
+reservation_apply_query_parameters = [
+    OpenApiParameter(
+        name="start_datetime_after",
+        description="해당 일자 이후의 시험 시작일 필터",
+    ),
+    OpenApiParameter(
+        name="start_datetime_before",
+        description="해당 일자 이전의 시험 시작일 필터",
+    ),
+    OpenApiParameter(
+        name="ordering",
+        description="필드 이름을 넣으면 해당 필드를 기준으로 정렬"
+        "필드 종류는 start_datetime이다. 내림차순으로 정렬하고 싶으면 앞에 `-`를 붙이면 된다.",
+        examples=[
+            OpenApiExample(
+                "시작일 내림차순 정렬",
+                summary="시험 시작일 기준으로 내림차순 정렬",
+                description="시험시작일 기준으로 내림차순으로 정렬합니다.",
+                value="-start_datetime",
+                parameter_only=True,
+            ),
+        ],
+    ),
+]
+
+
+admin_reservation_list_examples = [
+    OpenApiParameter(
+        name="status",
+        description="예약 상태 조회",
+    ),
+    OpenApiParameter(
+        name="reserved_count_max",
+        description="해당 인원 기준 이하로 예약인원 수를 필터",
+    ),
+    OpenApiParameter(
+        name="reserved_count_min",
+        description="해당 인원 기준 이상으로 예약인원 수를 필터",
+    ),
+    OpenApiParameter(
+        name="ordering",
+        description="필드 이름을 넣으면 해당 필드를 기준으로 정렬"
+        "필드 종류는 reserved_count이다. 내림차순으로 정렬하고 싶으면 앞에 `-`를 붙이면 된다.",
+        examples=[
+            OpenApiExample(
+                "예약 신청한 인원수 기준으로 내림차순 정렬",
+                summary="예약 신청 인원수 내림차순 정렬",
+                description="예약 신청한 인원수 기준으로 내림차순으로 정렬합니다.",
+                value="-reserved_count",
+                parameter_only=True,
+            ),
+        ],
     ),
 ]

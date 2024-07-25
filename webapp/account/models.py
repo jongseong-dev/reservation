@@ -6,6 +6,7 @@ class User(AbstractUser):
     email = models.EmailField(
         max_length=200, unique=True, db_comment="사용자 이메일"
     )
+    username = models.CharField(max_length=200, db_comment="사용자 이름")
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
 

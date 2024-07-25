@@ -12,12 +12,6 @@
 
 [테이블 설계 스케치](./docs/db.md)
 
-# 기능 소개
-
-- [사용자 app](./docs/account.md)
-- [예약 app](./docs/reservation.md)
-    - 예약된 일자 조회 API
-
 # 프로젝트 시작하기
 
 ## 필요한 요소 세팅 및 Django App 실행하기
@@ -40,9 +34,16 @@
 
   ```bash
   docker-compose up --build -d db
-  docker-compose up --build web  
+  docker-compose up --build -d web
   ```
-  
+
+- 관리자는 아래의 계정 정보를 통해 로그인 할 수 있습니다.
+
+```markdown
+- email: admin@example.com
+- password: adminpassword
+```
+
 - 만약 windows 환경에서 실행이 안 된다면 os 환경에 따른 줄바꿈 문제일 수 있습니다.
 - linux os의 줄바꿈 방식(LF)으로 변경해 주세요.
 
@@ -58,7 +59,7 @@
 
 - 테스트를 진행 할 수 있습니다.
   ```bash
-  docker-compose up --build test
+  docker-compose up --build test_web
   ```
 
 ## 환경변수
@@ -85,3 +86,8 @@
 | DB_HOST     | localhost |
 | DB_PORT     | 5432      |
 
+
+## 시스템 설명 방법
+
+- 해당 시스템의 이용 방법을 시나리오를 통해 설명하고 있다
+- [시나리오 보기](docs/scenario.md)

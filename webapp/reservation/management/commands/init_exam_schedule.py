@@ -20,13 +20,13 @@ class Command(BaseCommand):
             stdout_error_message(self)
 
         interval = 2  # 2시간 범위로 생성
-        for hour in range(0, 24 * 4, interval):
+        for hour in range(0, 24 * 14, interval):
             day = hour // 24
             hour_ = hour % 24
             start_datetime = calc(day, hour_)
             end_datetime = start_datetime + timezone.timedelta(hours=2)
             max_capacity = MAXIMUM_RESERVED_COUNT
-            ExamSchedule.objects.create(
+            ExamSchedule.objects.get_or_create(
                 start_datetime=start_datetime,
                 end_datetime=end_datetime,
                 max_capacity=max_capacity,
