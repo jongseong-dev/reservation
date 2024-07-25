@@ -1,14 +1,15 @@
 from django.core.validators import MinValueValidator
 from django.db import transaction
 from django.db.models import F
+from django.utils import timezone
 from rest_framework import serializers
 
 from reservation.const import (
     ReservationErrorResponseMessage,
+    DAYS_PRIOR_TO_RESERVATION,
 )
 from reservation.models import Reservation, ExamSchedule
-from reservation.remainder import remainder
-from reservation.validators import validate_exam_schedule
+from utils import time_difference
 
 
 class ExamScheduleListSerializer(serializers.ModelSerializer):
@@ -58,9 +59,31 @@ class ReservationCreateSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
-        exam_schedule_id = data["exam_schedule_id"]
+        exam_scheduled_id = data["exam_schedule_id"]
         reserved_count = data["reserved_count"]
-        validate_exam_schedule(exam_schedule_id, reserved_count)
+        try:
+            exam_schedule = ExamSchedule.objects.get(id=exam_scheduled_id)
+        except ExamSchedule.DoesNotExist:
+            raise serializers.ValidationError(
+                ReservationErrorResponseMessage.NOT_FOUND_EXAM_SCHEDULE
+            )
+
+        now = timezone.now()
+        remain_days = time_difference(exam_schedule.start_datetime, now)
+        if remain_days < DAYS_PRIOR_TO_RESERVATION:
+            raise serializers.ValidationError(
+                ReservationErrorResponseMessage.ALREADY_DAYS_AGO_RESERVED
+            )
+
+        remain_count = (
+            exam_schedule.max_capacity - exam_schedule.confirmed_reserved_count
+        )
+        if remain_count < reserved_count:
+            raise serializers.ValidationError(
+                ReservationErrorResponseMessage.EXCEED_REMAIN_COUNT
+            )
+
+        return data
 
     def create(self, validated_data):
         return super().create(validated_data)
@@ -126,20 +149,13 @@ class AdminReservationUpdateStatusSerializer(serializers.ModelSerializer):
             "status",
         ]
 
-    def validate_reserved_count(self):
+    def _validate_reserved_count(self):
         # 예약 가능 인원수를 초과했는지 확인
-        remain_count = remainder.get_remain_count(
-            self.instance.exam_schedule_id
-        )
-        if remain_count is None:
-            total = self.instance.exam_schedule.max_capacity
-            reserved_count = (
-                self.instance.exam_schedule.confirmed_reserved_count
-            )
-            remain_count = total - reserved_count
-            remainder.update_remain_count(
-                self.instance.exam_schedule.id, total, reserved_count
-            )
+        exam_schedule = self.instance.exam_schedule
+        reserved_count = self.instance.reserved_count
+        total = exam_schedule.max_capacity
+        remain_count = total - reserved_count
+
         if remain_count < self.instance.reserved_count:
             raise serializers.ValidationError(
                 ReservationErrorResponseMessage.EXCEED_REMAIN_COUNT
@@ -161,7 +177,7 @@ class AdminReservationUpdateStatusSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         status = validated_data["status"]
         self.validate_status(status)
-        self.validate_reserved_count()
+        self._validate_reserved_count()
         with transaction.atomic():
             instance.status = status
             instance.reserved_count = validated_data.get(
@@ -176,10 +192,4 @@ class AdminReservationUpdateStatusSerializer(serializers.ModelSerializer):
                 )
                 exam_schedule.save()
                 exam_schedule.refresh_from_db()
-                # cache에 남은 숫자 갱신
-                remainder.update_remain_count(
-                    exam_schedule.id,
-                    exam_schedule.max_capacity,
-                    exam_schedule.confirmed_reserved_count,
-                )
             return instance
