@@ -94,7 +94,7 @@ def test_admin_canceled_reservation_api_cancels_correctly(
         "admin_reservation:reservation-canceled",
         kwargs={"version": "v1", "pk": reservation.id},
     )
-    response = auth_admin_client.put(canceled_url)
+    response = auth_admin_client.delete(canceled_url)
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
@@ -144,7 +144,7 @@ def test_not_change_when_same_status_reservation_api_invalid(
         "admin_reservation:reservation-canceled",
         kwargs={"version": "v1", "pk": reservation.id},
     )
-    response = auth_admin_client.put(reserved_url)
+    response = auth_admin_client.delete(reserved_url)
     expected_message = ReservationErrorResponseMessage.SAME_STATUS_CHECK
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert str(response.data["message"][0]) == expected_message
