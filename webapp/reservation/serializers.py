@@ -101,11 +101,8 @@ class ReservationCreateUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 ReservationErrorResponseMessage.ALREADY_DAYS_AGO_RESERVED
             )
-
-        remain_count = (
-            exam_schedule.max_capacity - exam_schedule.confirmed_reserved_count
-        )
-        if remain_count < reserved_count:
+        current_count = reserved_count + exam_schedule.confirmed_reserved_count
+        if current_count > exam_schedule.max_capacity:
             raise serializers.ValidationError(
                 ReservationErrorResponseMessage.EXCEED_REMAIN_COUNT
             )
@@ -186,10 +183,8 @@ class AdminReservationUpdateStatusSerializer(serializers.ModelSerializer):
         # 예약 가능 인원수를 초과했는지 확인
         exam_schedule = self.instance.exam_schedule
         reserved_count = self.instance.reserved_count
-        total = exam_schedule.max_capacity
-        remain_count = total - reserved_count
-
-        if remain_count < self.instance.reserved_count:
+        current_count = reserved_count + exam_schedule.confirmed_reserved_count
+        if current_count > exam_schedule.max_capacity:
             raise serializers.ValidationError(
                 ReservationErrorResponseMessage.EXCEED_REMAIN_COUNT
             )
