@@ -34,7 +34,7 @@
 
   ```bash
   docker-compose up --build -d db
-  docker-compose up --build web -d
+  docker-compose up --build -d web
   ```
 
 - 관리자는 아래의 계정 정보를 통해 로그인 할 수 있습니다.
