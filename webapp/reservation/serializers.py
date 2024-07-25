@@ -81,6 +81,13 @@ class ReservationCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         return super().create(validated_data)
 
+    def update(self, instance, validated_data):
+        if instance.status == Reservation.Status.RESERVED:
+            raise serializers.ValidationError(
+                ReservationErrorResponseMessage.CAN_NOT_MODIFY_RESERVED
+            )
+        return super().update(instance, validated_data)
+
 
 class AdminReservationSerializer(serializers.ModelSerializer):
     status = serializers.CharField(read_only=True)
