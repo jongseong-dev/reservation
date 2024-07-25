@@ -1,7 +1,6 @@
 from django.core.validators import MinValueValidator
 from django.db import transaction
 from django.db.models import F
-from django.utils import timezone
 from rest_framework import serializers
 
 from reservation.const import (
@@ -9,7 +8,7 @@ from reservation.const import (
     DAYS_PRIOR_TO_RESERVATION,
 )
 from reservation.models import Reservation, ExamSchedule
-from utils import time_difference
+from reservation.validate import validate_reservation
 
 
 class ExamScheduleListSerializer(serializers.ModelSerializer):
@@ -51,7 +50,7 @@ class ReservationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reservation
-        fields = ["exam_schedule", "reserved_count", "status"]
+        fields = ["id", "exam_schedule", "reserved_count", "status"]
 
 
 class ReservationDeleteSerializer(serializers.ModelSerializer):
@@ -81,6 +80,7 @@ class ReservationCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
         fields = [
+            "id",
             "exam_schedule_id",
             "reserved_count",
         ]
@@ -95,17 +95,9 @@ class ReservationCreateUpdateSerializer(serializers.ModelSerializer):
                 ReservationErrorResponseMessage.NOT_FOUND_EXAM_SCHEDULE
             )
 
-        now = timezone.now()
-        remain_days = time_difference(exam_schedule.start_datetime, now)
-        if remain_days < DAYS_PRIOR_TO_RESERVATION:
-            raise serializers.ValidationError(
-                ReservationErrorResponseMessage.ALREADY_DAYS_AGO_RESERVED
-            )
-        current_count = reserved_count + exam_schedule.confirmed_reserved_count
-        if current_count > exam_schedule.max_capacity:
-            raise serializers.ValidationError(
-                ReservationErrorResponseMessage.EXCEED_REMAIN_COUNT
-            )
+        validate_reservation(
+            exam_schedule, reserved_count, DAYS_PRIOR_TO_RESERVATION
+        )
 
         return data
 
@@ -148,6 +140,29 @@ class AdminReservationSerializer(serializers.ModelSerializer):
             "reserved_username",
             "status",
         ]
+
+    def validate(self, data):
+        exam_scheduled_id = data["exam_schedule_id"]
+        try:
+            exam_schedule = ExamSchedule.objects.get(id=exam_scheduled_id)
+        except ExamSchedule.DoesNotExist:
+            raise serializers.ValidationError(
+                ReservationErrorResponseMessage.NOT_FOUND_EXAM_SCHEDULE
+            )
+
+        validate_reservation(
+            exam_schedule, data["reserved_count"], DAYS_PRIOR_TO_RESERVATION
+        )
+
+        return data
+
+    def update(self, instance, validated_data):
+        if instance.status == Reservation.Status.RESERVED:
+            raise serializers.ValidationError(
+                ReservationErrorResponseMessage.CAN_NOT_MODIFY_RESERVED
+            )
+
+        return super().update(instance, validated_data)
 
 
 class AdminReservationUpdateStatusSerializer(serializers.ModelSerializer):
