@@ -4,7 +4,6 @@ from unittest.mock import patch
 import pytest
 from django.core.management import call_command
 from django.contrib.auth import get_user_model
-from account.models import Company
 
 User = get_user_model()
 
@@ -40,13 +39,6 @@ def test_superuser_creation_does_not_duplicate_superuser():
 
 @pytest.mark.django_db
 def test_regular_user_creation_does_not_duplicate_regular_user():
-    company, _ = Company.objects.get_or_create(
-        name="example company",
-        email="company@example.com",
-        established_date="2022-01-01",
-    )
-    User.objects.create_user(
-        "user", "user@example.com", "userpassword", company=company
-    )
+    User.objects.create_user("user", "user@example.com", "userpassword")
     call_command("create_default_user")
     assert User.objects.filter(username="user").count() == 1
