@@ -48,3 +48,33 @@ reservation_apply_query_parameters = [
         ],
     ),
 ]
+
+
+admin_reservation_list_examples = [
+    OpenApiParameter(
+        name="status",
+        description="예약 상태 조회",
+    ),
+    OpenApiParameter(
+        name="reserved_count_max",
+        description="해당 인원 기준 이하로 예약인원 수를 필터",
+    ),
+    OpenApiParameter(
+        name="reserved_count_min",
+        description="해당 인원 기준 이상으로 예약인원 수를 필터",
+    ),
+    OpenApiParameter(
+        name="ordering",
+        description="필드 이름을 넣으면 해당 필드를 기준으로 정렬"
+        "필드 종류는 reserved_count이다. 내림차순으로 정렬하고 싶으면 앞에 `-`를 붙이면 된다.",
+        examples=[
+            OpenApiExample(
+                "예약 신청한 인원수 기준으로 내림차순 정렬",
+                summary="예약 신청 인원수 내림차순 정렬",
+                description="예약 신청한 인원수 기준으로 내림차순으로 정렬합니다.",
+                value="-reserved_count",
+                parameter_only=True,
+            ),
+        ],
+    ),
+]
