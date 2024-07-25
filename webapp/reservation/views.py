@@ -22,6 +22,7 @@ from reservation.serializers import (
     ReservationSerializer,
     AdminReservationSerializer,
     AdminReservationUpdateStatusSerializer,
+    ReservationDeleteSerializer,
 )
 
 
@@ -75,10 +76,52 @@ class ReservationViewSet(viewsets.ModelViewSet):
             status=Reservation.Status.CANCLED
         )
 
+    def perform_update_status(
+        self, data, reserved_status: Reservation.Status.choices
+    ):
+        instance = self.get_object()
+        data["status"] = reserved_status
+        serializer = ReservationDeleteSerializer(instance, data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return serializer
+
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:
             return ReservationCreateUpdateSerializer
+        elif self.action == "delete":
+            return ReservationDeleteSerializer
         return ReservationSerializer
+
+    @extend_schema(
+        summary="고객이 본인 예약을 삭제하는 API",
+        description="고객이 해당 일자에 예약을 삭제하는 API",
+        tags=["Reservation"],
+        request=ReservationCreateUpdateSerializer,
+        examples=reservation_apply_example,
+        responses={
+            204: OpenApiResponse(response=None),
+        },
+    )
+    @action(
+        detail=True,
+        methods=["DELETE", "PUT"],
+        url_path="canceled",
+        url_name="canceled",
+    )
+    def canceled_reservation(self, request, version=None, pk=None):
+        """
+        예약을 삭제하는 API
+        """
+        try:
+            self.perform_update_status(
+                request.data, Reservation.Status.CANCLED
+            )
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ValidationError as ve:
+            return Response(
+                {"message": ve.detail}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     @extend_schema(
         summary="예약 신청할 수 있는 API",
@@ -173,7 +216,7 @@ class AdminReservationViewSet(viewsets.ModelViewSet):
         tags=["Admin Reservation"],
         request=AdminReservationUpdateStatusSerializer,
         responses={
-            201: OpenApiResponse(response=AdminReservationSerializer),
+            204: OpenApiResponse(response=None),
         },
     )
     @action(
@@ -188,10 +231,10 @@ class AdminReservationViewSet(viewsets.ModelViewSet):
         예약을 확정하는 API
         """
         try:
-            serializer = self.perform_update_status(
+            self.perform_update_status(
                 request.data, Reservation.Status.RESERVED
             )
-            return Response(serializer.data)
+            return Response(status=status.HTTP_204_NO_CONTENT)
         except ValidationError as ve:
             return Response(
                 {"message": ve.detail}, status=status.HTTP_400_BAD_REQUEST
@@ -203,12 +246,12 @@ class AdminReservationViewSet(viewsets.ModelViewSet):
         tags=["Admin Reservation"],
         request=AdminReservationUpdateStatusSerializer,
         responses={
-            201: OpenApiResponse(response=AdminReservationSerializer),
+            204: OpenApiResponse(response=None),
         },
     )
     @action(
         detail=True,
-        methods=["PUT"],
+        methods=["PUT", "DELETE"],
         url_path="canceled",
         url_name="canceled",
         serializer_class=AdminReservationUpdateStatusSerializer,
@@ -218,10 +261,10 @@ class AdminReservationViewSet(viewsets.ModelViewSet):
         예약을 삭제하는 API
         """
         try:
-            serializer = self.perform_update_status(
+            self.perform_update_status(
                 request.data, Reservation.Status.CANCLED
             )
-            return Response(serializer.data)
+            return Response(status=status.HTTP_204_NO_CONTENT)
         except ValidationError as ve:
             return Response(
                 {"message": ve.detail}, status=status.HTTP_400_BAD_REQUEST

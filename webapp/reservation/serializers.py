@@ -42,6 +42,21 @@ class ReservationSerializer(serializers.ModelSerializer):
         fields = ["exam_schedule", "reserved_count", "status"]
 
 
+class ReservationDeleteSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = Reservation
+        fields = ["status"]
+
+    def update(self, instance, validated_data):
+        if instance.status == Reservation.Status.RESERVED:
+            raise serializers.ValidationError(
+                ReservationErrorResponseMessage.CAN_NOT_MODIFY_RESERVED
+            )
+        return super().update(instance, validated_data)
+
+
 class ReservationCreateUpdateSerializer(serializers.ModelSerializer):
     exam_schedule_id = serializers.IntegerField(help_text="시험 일정 ID")
     reserved_count = serializers.IntegerField(
