@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from django.core.management import BaseCommand
 
@@ -16,7 +17,7 @@ def is_deployment_env() -> bool:
     return not (is_local_env or is_test_env)
 
 
-def stdout_error_message(self: BaseCommand, error_message: str = None):
+def stdout_error_message(self: BaseCommand, error_message: str | None = None):
     """
     에러 메시지를 출력하고 프로그램을 종료한다.
     """
@@ -24,3 +25,13 @@ def stdout_error_message(self: BaseCommand, error_message: str = None):
         error_message = "This command can only be run in local environment"
     self.stdout.write(self.style.ERROR(error_message))
     raise SystemExit
+
+
+def time_difference(
+    future_datetime: datetime,
+    old_datetime: datetime,
+) -> int:
+    """
+    두 날짜 사이의 차이를 계산하는 함수
+    """
+    return (future_datetime - old_datetime).days

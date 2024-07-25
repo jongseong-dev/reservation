@@ -11,3 +11,6 @@ class ReservationErrorResponseMessage:
     NOT_FOUND_EXAM_SCHEDULE = "존재하지 않는 시험 일정입니다."
     SAME_STATUS_CHECK = "이미 동일한 상태입니다."
     CAN_NOT_MODIFY_RESERVED = "확정된 예약은 수정할 수 없습니다."
+    ALREADY_DAYS_AGO_RESERVED = (
+        f"시험 일정은 {DAYS_PRIOR_TO_RESERVATION}일 전까지 신청 가능합니다."
+    )

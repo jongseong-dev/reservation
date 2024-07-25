@@ -7,8 +7,8 @@ from reservation.views import (
 
 app_name = "reservation"
 router = DefaultRouter()
+router.register("exam-schedule", ExamScheduleViewSet, basename="exam-schedule")
 router.register("", ReservationViewSet)
-router.register("exam_schedule", ExamScheduleViewSet, basename="exam-schedule")
 
 
 urlpatterns = router.urls

@@ -1,11 +1,13 @@
 from django.utils import timezone
+
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet
 
 from reservation.api_schemas import (
     reservation_apply_example,
@@ -59,15 +61,23 @@ class ExamScheduleViewSet(viewsets.ReadOnlyModelViewSet):
         return super().retrieve(request, *args, **kwargs)
 
 
-class ReservationViewSet(GenericViewSet):
-    queryset = Reservation.objects.all()
+class ReservationViewSet(viewsets.ModelViewSet):
+    queryset = Reservation.objects.select_related("exam_schedule").all()
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = [
+        "status",
+    ]
+    ordering_fields = ["exam_schedule__start_datetime"]
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user).exclude(
+            status=Reservation.Status.CANCLED
+        )
 
     def get_serializer_class(self):
-        if self.action == "create":
+        if self.action in ["create", "update", "partial_update"]:
             return ReservationCreateSerializer
-        elif self.action in ["update", "partial_update"]:
-            pass
         return ReservationSerializer
 
     @extend_schema(
@@ -89,6 +99,48 @@ class ReservationViewSet(GenericViewSet):
         reservation_data = ReservationSerializer(result).data
 
         return Response(reservation_data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        summary="예약을 수정할 수 있는 API",
+        description="""
+                    고객이 예약을 수정할 수 있다.
+                    """,
+        tags=["Reservation"],
+        request=ReservationCreateSerializer,
+        examples=reservation_apply_example,
+        responses={
+            200: OpenApiResponse(response=ReservationSerializer),
+        },
+    )
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = serializer.save(user=request.user)
+        reservation_data = ReservationSerializer(result).data
+
+        return Response(reservation_data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        summary="본인 예약 확인 API",
+        description="본인이 예약한 내역을 조회하는 API",
+        tags=["Reservation"],
+        responses={
+            200: OpenApiResponse(response=ReservationSerializer),
+        },
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="본인 예약 상세 확인 API",
+        description="본인이 예약한 내역을 상세 조회하는 API",
+        tags=["Reservation"],
+        responses={
+            200: OpenApiResponse(response=ReservationSerializer),
+        },
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
 
 
 class AdminReservationViewSet(viewsets.ModelViewSet):
