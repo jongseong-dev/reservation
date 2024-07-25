@@ -10,13 +10,14 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 
 from reservation.api_schemas import (
-    reservation_apply_example,
     reservation_apply_query_parameters,
+    admin_reservation_list_examples,
+    reservation_apply_example,
 )
 from reservation.const import (
     DAYS_PRIOR_TO_RESERVATION,
 )
-from reservation.filtersets import ExamScheduleFilter
+from reservation.filtersets import ExamScheduleFilter, AdminReservationFilter
 from reservation.models import ExamSchedule, Reservation
 from reservation.serializers import (
     ExamScheduleListSerializer,
@@ -103,15 +104,13 @@ class ReservationViewSet(viewsets.ModelViewSet):
         summary="고객이 본인 예약을 삭제하는 API",
         description="고객이 해당 일자에 예약을 삭제하는 API",
         tags=["Reservation"],
-        request=ReservationCreateUpdateSerializer,
-        examples=reservation_apply_example,
         responses={
             204: OpenApiResponse(response=None),
         },
     )
     @action(
         detail=True,
-        methods=["DELETE", "PUT"],
+        methods=["DELETE"],
         url_path="canceled",
         url_name="canceled",
     )
@@ -162,12 +161,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
         },
     )
     def update(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        result = serializer.save(user=request.user)
-        reservation_data = ReservationSerializer(result).data
-
-        return Response(reservation_data, status=status.HTTP_201_CREATED)
+        return super().update(request, *args, **kwargs)
 
     @extend_schema(
         summary="본인 예약 확인 API",
@@ -196,6 +190,9 @@ class AdminReservationViewSet(viewsets.ModelViewSet):
     serializer_class = AdminReservationSerializer
     queryset = Reservation.objects.select_related("exam_schedule").all()
     permission_classes = [IsAdminUser]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_class = AdminReservationFilter
+    ordering_fields = ["reserved_count"]
 
     class Meta:
         model = Reservation
@@ -217,12 +214,28 @@ class AdminReservationViewSet(viewsets.ModelViewSet):
         return serializer
 
     @extend_schema(
+        summary="전체 고객 예약 조회 API",
+        description="관리자가 예약을 조회하는 API",
+        tags=["Admin Reservation"],
+        parameters=admin_reservation_list_examples,
+        responses={
+            200: AdminReservationSerializer,
+        },
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
         summary="예약 확정 API",
         description="신청한 예약을 확정하는 API",
         tags=["Admin Reservation"],
         request=AdminReservationUpdateStatusSerializer,
         responses={
-            204: OpenApiResponse(response=None),
+            204: OpenApiResponse(description="예약 확정이 성공적으로 되었다."),
+            400: OpenApiResponse(
+                description="만약 인원이 넘거나, 확정된 상태에서 "
+                "또 확정시키면 오류가 나게된다."
+            ),
         },
     )
     @action(
