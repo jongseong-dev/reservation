@@ -1,5 +1,6 @@
 import pytest
 from django.urls import reverse
+from rest_framework import status
 
 
 @pytest.fixture
@@ -66,3 +67,29 @@ def test_verify_token_returns_token_valid(
 def test_verify_token_with_invalid_token(client, verify_token_url):
     response = client.post(verify_token_url, {"token": "invalidtoken"})
     assert response.status_code == 401
+
+
+@pytest.mark.django_db
+def test_signup_api_valid(client):
+    response = client.post(
+        reverse("account:signup"),
+        {
+            "email": "test@example.com",
+            "password": "testpassword",
+            "username": "test",
+        },
+    )
+    assert response.status_code == status.HTTP_201_CREATED
+
+
+@pytest.mark.django_db
+def test_signup_api_invalid_duplicate_email(client, user):
+    response = client.post(
+        reverse("account:signup"),
+        {
+            "email": user.email,
+            "password": "testpassword",
+            "username": "test",
+        },
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST

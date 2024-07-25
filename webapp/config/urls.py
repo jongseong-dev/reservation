@@ -38,6 +38,7 @@ def health_check(request):
 urlpatterns = [
     path("api-auth/", include("rest_framework.urls")),
     path("health/", health_check, name="health_check"),
+    # token auth
     path(
         "api/token/",
         TokenObtainPairView.as_view(),
@@ -56,6 +57,8 @@ urlpatterns = [
         "api/<str:version>/reservation/",
         include("reservation.urls", namespace="reservation"),
     ),
+    # account
+    path("api/account/", include("account.urls", namespace="account")),
 ]
 
 if settings.DEBUG:
