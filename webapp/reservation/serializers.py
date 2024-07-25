@@ -34,10 +34,11 @@ class ExamScheduleListSerializer(serializers.ModelSerializer):
 
 class ReservationSerializer(serializers.ModelSerializer):
     exam_schedule = ExamScheduleListSerializer(read_only=True)
+    status = serializers.CharField(read_only=True)
 
     class Meta:
         model = Reservation
-        fields = ["reserved_count", "exam_schedule"]
+        fields = ["exam_schedule", "reserved_count", "status"]
 
 
 class ReservationCreateSerializer(serializers.ModelSerializer):
