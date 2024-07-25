@@ -12,8 +12,9 @@ from reservation.factories import ExamScheduleFactory, ReservationFactory
 from reservation.models import Reservation
 from reservation.serializers import (
     ExamScheduleListSerializer,
-    ReservationCreateSerializer,
+    ReservationCreateUpdateSerializer,
     AdminReservationUpdateStatusSerializer,
+    ReservationDeleteSerializer,
 )
 
 
@@ -29,7 +30,7 @@ def exam_schedule():
 
 @pytest.fixture
 def reservation_create_serializer():
-    return ReservationCreateSerializer()
+    return ReservationCreateUpdateSerializer()
 
 
 @pytest.fixture
@@ -55,7 +56,7 @@ def test_exam_schedule_list_serializer_correct_remain_count(
 
 @pytest.mark.django_db
 def test_reservation_create_serializer_validates_correctly(exam_schedule):
-    serializer = ReservationCreateSerializer(
+    serializer = ReservationCreateUpdateSerializer(
         data={
             "exam_schedule_id": exam_schedule.id,
             "reserved_count": 10,
@@ -68,7 +69,7 @@ def test_reservation_create_serializer_validates_correctly(exam_schedule):
 def test_reservation_create_serializer_raises_error_for_exceeding_capacity(
     exam_schedule,
 ):
-    serializer = ReservationCreateSerializer(
+    serializer = ReservationCreateUpdateSerializer(
         data={
             "exam_schedule_id": exam_schedule.id,
             "reserved_count": MAXIMUM_RESERVED_COUNT + 300,
@@ -82,7 +83,7 @@ def test_reservation_create_serializer_raises_error_for_exceeding_capacity(
 def test_reservation_create_serializer_raises_error_non_id(
     exam_schedule,
 ):
-    serializer = ReservationCreateSerializer(
+    serializer = ReservationCreateUpdateSerializer(
         data={"exam_schedule_id": exam_schedule.id + 10, "reserved_count": 10}
     )
     with pytest.raises(serializers.ValidationError):
@@ -218,14 +219,37 @@ def test_invalid_reserved_count(
         "reserved_count": reserved_count,
     }
     with pytest.raises(ValidationError):
-        ReservationCreateSerializer(data=data).is_valid(raise_exception=True)
+        ReservationCreateUpdateSerializer(data=data).is_valid(
+            raise_exception=True
+        )
 
 
 @pytest.mark.django_db
 def test_create_reservation(user, exam_schedule):
     data = {"exam_schedule_id": exam_schedule.id, "reserved_count": 5}
-    serializer = ReservationCreateSerializer(data=data)
+    serializer = ReservationCreateUpdateSerializer(data=data)
     assert serializer.is_valid()
     reservation = serializer.save(user=user)
     assert reservation.exam_schedule == exam_schedule
     assert reservation.reserved_count == 5
+
+
+@pytest.mark.django_db
+def test_update_reservation_status_when_status_is_reserved(reservation):
+    reservation.status = Reservation.Status.RESERVED
+    serializer = ReservationDeleteSerializer(instance=reservation)
+
+    with pytest.raises(ValidationError):
+        serializer.update(reservation, {"status": Reservation.Status.CANCLED})
+
+
+@pytest.mark.django_db
+def test_update_reservation_status_when_status_is_not_reserved(reservation):
+    reservation.status = Reservation.Status.PENDING
+    serializer = ReservationDeleteSerializer(
+        instance=reservation, data={"status": Reservation.Status.CANCLED}
+    )
+    update_serializer = serializer.update(
+        reservation, {"status": Reservation.Status.CANCLED}
+    )
+    assert update_serializer.status == Reservation.Status.CANCLED
