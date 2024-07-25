@@ -30,4 +30,36 @@
 ## 시험 예약하기
 
 - 해당 시험 일정을 조회했다면 시험을 신청하고자 한다.
-  -  
+  - `POST /api/v1/reservation/`을 통해 시험을 신청한다.
+  - 시험 예약에는 시험 일정 정보를 담고있는 exam_schedule_id와 응시 인원을 담고있는 reserved_count가 필요하다.
+  - 시험 예약은 최대 5만명까지 가능하다.
+  - 단 관리자가 확정하기 전까지는 예약 인원에 포함되지 않는다.
+  - 시험 일정은 3일 전까지만 예약 가능하다.
+
+## 시험 확정하기
+
+- 관리자는 시험을 확정할 수 있다.
+  - `POST /api/v1/reservation/:reservation_id/reserved/`을 통해 시험을 확정한다.
+  - 확정된 시험은 예약 인원에 포함된다.
+  - 확정된 시험은 취소할 수 없다.
+
+## 시험 취소하기
+
+- 관리자는 확정되지 않은 시험을 삭제할 수 있다.
+  - `DELETE /api/v1/reservation/:reservation_id/canceled`을 통해 시험을 삭제한다.
+  - soft delete 이므로 관리자가 조회하는 예약 조회에서는 보일 수 있다.
+
+- 고객은 본인의 시험을 삭제할 수 있다.
+  - `DELETE /api/v1/reservation/:reservation_id/canceled`을 통해 시험을 삭제한다. 
+  - 확정된 시험은 삭제할 수 없다.
+  - soft delete 이지만 삭제한 내역은 조회할 수 없다
+
+## 시험 수정하기
+
+- 관리자는 모든 고객의 시험을 수정할 수 있다.
+  - `PUT /admin/api/v1/reservation/:reservation_id/`을 통해 시험을 수정한다.
+  - 확정된 시험은 수정할 수 없다.
+
+- 고객은 본인의 시험을 수정할 수 있다.
+  - `PUT /api/v1/reservation/:reservation_id/`을 통해 시험을 수정한다.
+  - 확정된 시험은 수정할 수 없다.
