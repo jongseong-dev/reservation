@@ -95,8 +95,7 @@ def test_admin_canceled_reservation_api_cancels_correctly(
         kwargs={"version": "v1", "pk": reservation.id},
     )
     response = auth_admin_client.put(canceled_url)
-    assert response.status_code == status.HTTP_200_OK
-    assert response.data["status"] == Reservation.Status.CANCLED
+    assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
 @pytest.mark.django_db
@@ -120,8 +119,7 @@ def test_admin_reserved_reservation_api_valid(
         kwargs={"version": "v1", "pk": reservation.id},
     )
     response = auth_admin_client.put(reserved_url)
-    assert response.status_code == status.HTTP_200_OK
-    assert response.data["status"] == Reservation.Status.RESERVED
+    assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
 @pytest.mark.django_db
@@ -166,3 +164,48 @@ def test_exceed_reserved_count_reserved_reservation_api_invalid(
     expected_message = ReservationErrorResponseMessage.EXCEED_REMAIN_COUNT
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert str(response.data["message"][0]) == expected_message
+
+
+@pytest.mark.django_db
+def test_delete_reservation_api_valid(auth_user_client, reservation):
+    reservation.status = Reservation.Status.PENDING
+    reservation.save()
+    delete_url = reverse(
+        "reservation:reservation-canceled",
+        kwargs={"version": "v1", "pk": reservation.id},
+    )
+    response = auth_user_client.delete(delete_url)
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+
+@pytest.mark.django_db
+def test_delete_reservation_api_invalid_status(auth_user_client, reservation):
+    reservation.status = Reservation.Status.RESERVED
+    reservation.save()
+    delete_url = reverse(
+        "reservation:reservation-canceled",
+        kwargs={"version": "v1", "pk": reservation.id},
+    )
+    response = auth_user_client.delete(delete_url)
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+def test_delete_reservation_api_invalid_anonymous(client, reservation):
+    delete_url = reverse(
+        "reservation:reservation-canceled",
+        kwargs={"version": "v1", "pk": reservation.id},
+    )
+    response = client.delete(delete_url)
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.django_db
+def test_access_another_user_reservation_delete_api(
+    auth_another_user_client, reservation
+):
+    response = auth_another_user_client.delete(
+        "reservation:reservation-canceled",
+        kwargs={"version": "v1", "pk": reservation.id},
+    )
+    assert response.status_code != status.HTTP_204_NO_CONTENT

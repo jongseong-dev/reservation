@@ -28,8 +28,21 @@ def user(plain_password):
 
 
 @pytest.fixture
+def another_user(plain_password):
+    return UserFactory.create(password=plain_password, is_superuser=False)
+
+
+@pytest.fixture
 def auth_user_client(client, user):
     refresh = RefreshToken.for_user(user)
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+
+    return client
+
+
+@pytest.fixture
+def auth_another_user_client(client, another_user):
+    refresh = RefreshToken.for_user(another_user)
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
 
     return client
