@@ -8,6 +8,7 @@ from reservation.const import (
 )
 from reservation.models import Reservation, ExamSchedule
 from reservation.remainder import remainder
+from reservation.validators import validate_exam_schedule
 
 
 class ExamScheduleListSerializer(serializers.ModelSerializer):
@@ -57,26 +58,8 @@ class ReservationCreateSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         exam_schedule_id = data["exam_schedule_id"]
-        remain_count = remainder.get_remain_count(exam_schedule_id)
-        if remain_count is None:
-            try:
-                exam_schedule = ExamSchedule.objects.get(id=exam_schedule_id)
-            except ExamSchedule.DoesNotExist:
-                raise serializers.ValidationError(
-                    ReservationErrorResponseMessage.NOT_FOUND_EXAM_SCHEDULE
-                )
-            remain_count = remainder.update_remain_count(
-                exam_schedule_id,
-                exam_schedule.max_capacity,
-                exam_schedule.confirmed_reserved_count,
-            )
-
-        if remain_count < data["reserved_count"]:
-            raise serializers.ValidationError(
-                ReservationErrorResponseMessage.EXCEED_REMAIN_COUNT
-            )
-
-        return data
+        reserved_count = data["reserved_count"]
+        validate_exam_schedule(exam_schedule_id, reserved_count)
 
     def create(self, validated_data):
         return super().create(validated_data)
