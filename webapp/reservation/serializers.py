@@ -22,15 +22,27 @@ class ExamScheduleListSerializer(serializers.ModelSerializer):
     remain_count = serializers.SerializerMethodField(
         help_text="남은 예약 가능 인원"
     )
+    is_available = serializers.SerializerMethodField(
+        help_text="예약 가능 여부"
+    )
 
     class Meta:
         model = ExamSchedule
-        fields = ["id", "start_datetime", "end_datetime", "remain_count"]
+        fields = [
+            "id",
+            "start_datetime",
+            "end_datetime",
+            "remain_count",
+            "is_available",
+        ]
 
     def get_remain_count(self, obj) -> int:
         if isinstance(obj, dict):
             return obj["max_capacity"] - obj["confirmed_reserved_count"]
         return obj.max_capacity - obj.confirmed_reserved_count
+
+    def get_is_available(self, obj) -> bool:
+        return self.get_remain_count(obj) > 0
 
 
 class ReservationSerializer(serializers.ModelSerializer):
