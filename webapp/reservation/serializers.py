@@ -107,6 +107,12 @@ class AdminReservationSerializer(serializers.ModelSerializer):
     exam_schedule = ExamScheduleListSerializer(read_only=True)
     exam_schedule_id = serializers.IntegerField(write_only=True)
 
+    def get_reserved_user_email(self, obj) -> str:
+        return obj.user.email
+
+    def get_reserved_username(self, obj) -> str:
+        return obj.user.username
+
     class Meta:
         model = Reservation
         fields = [
