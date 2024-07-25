@@ -11,10 +11,12 @@ from rest_framework.response import Response
 
 from reservation.api_schemas import (
     reservation_apply_example,
+    reservation_apply_query_parameters,
 )
 from reservation.const import (
     DAYS_PRIOR_TO_RESERVATION,
 )
+from reservation.filtersets import ExamScheduleFilter
 from reservation.models import ExamSchedule, Reservation
 from reservation.serializers import (
     ExamScheduleListSerializer,
@@ -30,6 +32,9 @@ class ExamScheduleViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ExamSchedule.objects.all()
     serializer_class = ExamScheduleListSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_class = ExamScheduleFilter
+    ordering_fields = ["start_datetime"]
 
     def get_queryset(self):
         now = timezone.now()
@@ -42,7 +47,8 @@ class ExamScheduleViewSet(viewsets.ReadOnlyModelViewSet):
         summary="예약 가능한 일자를 조회하기 위한 API",
         description="고객이 예약을 할 때 "
         "어느 일자가 예약이 되어있는지 확인하는 API",
-        tags=["Reservation", "Exam Schedule"],
+        parameters=reservation_apply_query_parameters,
+        tags=["Exam Schedule"],
         responses={
             200: OpenApiResponse(response=ExamScheduleListSerializer),
         },
@@ -53,7 +59,7 @@ class ExamScheduleViewSet(viewsets.ReadOnlyModelViewSet):
     @extend_schema(
         summary="예약 가능한 일자 상세보기 API",
         description="해당 일자의 예약 가능한 시간을 상세 조회하는 API",
-        tags=["Reservation", "Exam Schedule"],
+        tags=["Exam Schedule"],
         responses={
             200: OpenApiResponse(response=ExamScheduleListSerializer),
         },
