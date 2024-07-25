@@ -18,7 +18,7 @@ from reservation.const import (
 from reservation.models import ExamSchedule, Reservation
 from reservation.serializers import (
     ExamScheduleListSerializer,
-    ReservationCreateSerializer,
+    ReservationCreateUpdateSerializer,
     ReservationSerializer,
     AdminReservationSerializer,
     AdminReservationUpdateStatusSerializer,
@@ -77,7 +77,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:
-            return ReservationCreateSerializer
+            return ReservationCreateUpdateSerializer
         return ReservationSerializer
 
     @extend_schema(
@@ -86,7 +86,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
                 고객이 해당 일자에 예약 신청하는 API
                 """,
         tags=["Reservation"],
-        request=ReservationCreateSerializer,
+        request=ReservationCreateUpdateSerializer,
         examples=reservation_apply_example,
         responses={
             200: OpenApiResponse(response=ReservationSerializer),
@@ -106,7 +106,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
                     고객이 예약을 수정할 수 있다.
                     """,
         tags=["Reservation"],
-        request=ReservationCreateSerializer,
+        request=ReservationCreateUpdateSerializer,
         examples=reservation_apply_example,
         responses={
             200: OpenApiResponse(response=ReservationSerializer),

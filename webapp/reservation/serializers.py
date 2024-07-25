@@ -42,7 +42,7 @@ class ReservationSerializer(serializers.ModelSerializer):
         fields = ["exam_schedule", "reserved_count", "status"]
 
 
-class ReservationCreateSerializer(serializers.ModelSerializer):
+class ReservationCreateUpdateSerializer(serializers.ModelSerializer):
     exam_schedule_id = serializers.IntegerField(help_text="시험 일정 ID")
     reserved_count = serializers.IntegerField(
         validators=[
