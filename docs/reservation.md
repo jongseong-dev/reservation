@@ -48,3 +48,13 @@ python manage.py init_exam_schedule --settings=configs.settings.local
 ```
 
 ![img.png](img/exam_schedule_detail_response.png)
+
+
+
+## 2. 고객의 예약 수정 API
+
+1. 고객은 자신의 예약을 수정할 수 있다.
+2. 예약 수정은 시험 시작 3일 전까지만 가능하다.
+3. 예약 확정이 되면 수정할 수 없다.
+4. 예약 수정할 수 있는 날짜는 예약할 수 있는 날짜를 조회하는 API에서 할 수 있다고 본다.
+5. 예약 확정되지 않으면 예약 인원에 포함되지 않는다.
