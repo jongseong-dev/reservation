@@ -43,9 +43,24 @@
 - email: admin@example.com
 - password: adminpassword
 ```
-
-- 만약 windows 환경에서 실행이 안 된다면 os 환경에 따른 줄바꿈 문제일 수 있습니다.
-- linux os의 줄바꿈 방식(LF)으로 변경해 주세요.
+- docker를 실행했을 때 `entrypoint를 찾을 수 없다`는 오류 메시지를 만난다면 개행 문자를 `LF`로 바꿔주세요.
+  ```bash
+  # 아래와 같은 메시지가 나올 경우
+  exec /mysite/entrypoint.sh: no such file or directory
+  ``` 
+- 또한 git config 설정에서 개행 문자를 LF로 설정해주세요
+    ```bash
+    git config --global core.eol lf
+    ```
+- 설정 확인
+  ```bash
+  git config --global --list | grep core.eol
+  
+  # 확인
+  ...
+  core.eol=lf
+  ``` 
+  
 
 ### 2. docker-compose 서비스 종료
 
